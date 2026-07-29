@@ -40,6 +40,46 @@ services:
       retries: 20
       start_period: 60s
 
+  backend:
+    build:
+      context: ./backend
+    container_name: messaging-backend
+    restart: unless-stopped
+    environment:
+      # Service names (postgres/ibmmq), not localhost: containers resolve each other via
+      # Docker Compose's built-in DNS. .env.example documents the localhost equivalents
+      # for running the backend on the host instead.
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-messaging}
+      DB_USERNAME: ${POSTGRES_USER:-messaging}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-messaging}
+      MQ_CONN_NAME: ibmmq(1414)
+      MQ_QMGR_NAME: ${MQ_QMGR_NAME:-QM1}
+      MQ_APP_USER: app
+      MQ_APP_PASSWORD: ${MQ_APP_PASSWORD:-passw0rd}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ibmmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: messaging-frontend
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+
 volumes:
   postgres-data:
   ibmmq-data:
