@@ -25,6 +25,45 @@
   padding: 24px;
 }
 
+.stats-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 100px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background-color: var(--mat-sys-surface-container);
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  .stat-label {
+    font-size: 0.85rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.stat-received .stat-value {
+  color: #33415c;
+}
+
+.stat-processed .stat-value {
+  color: #1b7a3d;
+}
+
+.stat-error .stat-value {
+  color: #a31515;
+}
+
 .messages-table {
   width: 100%;
 }

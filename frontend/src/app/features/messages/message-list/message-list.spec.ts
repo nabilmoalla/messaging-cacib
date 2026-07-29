@@ -29,7 +29,10 @@ describe('MessageList', () => {
       totalElements: 1,
       totalPages: 1,
     };
-    const messageService = { listByOffset: () => of(page) } as unknown as MessageService;
+    const messageService = {
+      listByOffset: () => of(page),
+      getStats: () => of({ byStatus: { RECEIVED: 1 }, bySourceQueue: {} }),
+    } as unknown as MessageService;
 
     TestBed.configureTestingModule({
       imports: [MessageList],
@@ -42,11 +45,13 @@ describe('MessageList', () => {
     const component = fixture.componentInstance;
     expect(component['messages']()).toHaveLength(1);
     expect(component['totalElements']()).toBe(1);
+    expect(component['totalMessages']()).toBe(1);
   });
 
   it('surfaces an error message when the request fails', () => {
     const messageService = {
       listByOffset: () => ({ subscribe: (observer: any) => observer.error({ status: 500 }) }),
+      getStats: () => of({ byStatus: {}, bySourceQueue: {} }),
     } as unknown as MessageService;
 
     TestBed.configureTestingModule({

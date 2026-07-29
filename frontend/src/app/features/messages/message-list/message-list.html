@@ -1,5 +1,26 @@
 <h1>Messages</h1>
 
+@if (stats(); as s) {
+  <div class="stats-bar">
+    <div class="stat-tile stat-total">
+      <span class="stat-value">{{ totalMessages() }}</span>
+      <span class="stat-label">Total</span>
+    </div>
+    <div class="stat-tile stat-received">
+      <span class="stat-value">{{ s.byStatus['RECEIVED'] ?? 0 }}</span>
+      <span class="stat-label">Reçus</span>
+    </div>
+    <div class="stat-tile stat-processed">
+      <span class="stat-value">{{ s.byStatus['PROCESSED'] ?? 0 }}</span>
+      <span class="stat-label">Traités</span>
+    </div>
+    <div class="stat-tile stat-error">
+      <span class="stat-value">{{ s.byStatus['ERROR'] ?? 0 }}</span>
+      <span class="stat-label">Erreurs</span>
+    </div>
+  </div>
+}
+
 <form class="filters" (ngSubmit)="applyFilters()">
   <mat-form-field appearance="outline">
     <mat-label>Statut</mat-label>

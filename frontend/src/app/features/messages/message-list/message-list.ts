@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -14,6 +14,7 @@ import { MessageService } from '../../../core/services/message.service';
 import {
   MessageFilter,
   MessageResponse,
+  MessageStatsResponse,
   MessageStatus,
 } from '../../../core/models/message.model';
 import { StatusChip } from '../../../shared/status-chip/status-chip';
@@ -57,6 +58,12 @@ export class MessageList implements OnInit {
   protected readonly pageSize = signal(20);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
+
+  protected readonly stats = signal<MessageStatsResponse | null>(null);
+  protected readonly totalMessages = computed(() => {
+    const byStatus = this.stats()?.byStatus;
+    return byStatus ? Object.values(byStatus).reduce((sum, count) => sum + count, 0) : 0;
+  });
 
   protected status: MessageStatus | null = null;
   protected sourceQueue = '';
@@ -106,6 +113,15 @@ export class MessageList implements OnInit {
         this.error.set('Impossible de charger les messages. Vérifiez que le backend est démarré.');
         this.loading.set(false);
       },
+    });
+
+    this.loadStats();
+  }
+
+  private loadStats(): void {
+    this.messageService.getStats().subscribe({
+      next: (result) => this.stats.set(result),
+      error: () => this.stats.set(null),
     });
   }
 
