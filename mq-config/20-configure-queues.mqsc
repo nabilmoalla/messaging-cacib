@@ -1,0 +1,8 @@
+* Backout queue for messages that exceed the redelivery threshold on DEV.QUEUE.1.
+DEFINE QLOCAL('DEV.QUEUE.BACKOUT') REPLACE +
+    DESCR('Backout queue - messages exceeding BOTHRESH on DEV.QUEUE.1') +
+    MAXDEPTH(5000)
+
+* After 3 failed delivery attempts, IBM MQ routes the message here instead of
+* redelivering it indefinitely and blocking the consumer.
+ALTER QLOCAL('DEV.QUEUE.1') BOTHRESH(3) BOQNAME('DEV.QUEUE.BACKOUT')

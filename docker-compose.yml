@@ -18,7 +18,9 @@ services:
       retries: 10
 
   ibmmq:
-    image: icr.io/ibm-messaging/mq:9.4.0.0-r3
+    build:
+      context: ./mq-config
+    image: messaging-ibmmq-dev:9.4.0.0-r3
     container_name: messaging-ibmmq
     restart: unless-stopped
     environment:

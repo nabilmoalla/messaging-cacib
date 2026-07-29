@@ -2,6 +2,53 @@ spring:
   application:
     name: messaging-cacib
 
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/messaging}
+    username: ${DB_USERNAME:messaging}
+    password: ${DB_PASSWORD:messaging}
+    hikari:
+      pool-name: messaging-hikari
+      maximum-pool-size: ${DB_POOL_MAX:20}
+      minimum-idle: ${DB_POOL_MIN:5}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+  jms:
+    listener:
+      session:
+        transacted: true
+
+ibm:
+  mq:
+    conn-name: ${MQ_CONN_NAME:localhost(1414)}
+    channel: ${MQ_CHANNEL:DEV.APP.SVRCONN}
+    queue-manager: ${MQ_QMGR_NAME:QM1}
+    user: ${MQ_APP_USER:app}
+    password: ${MQ_APP_PASSWORD:passw0rd}
+    userAuthenticationMQCSP: true
+    pool:
+      enabled: true
+      max-connections: ${MQ_POOL_MAX_CONNECTIONS:10}
+      max-sessions-per-connection: ${MQ_POOL_MAX_SESSIONS:10}
+
+app:
+  mq:
+    queue: ${APP_MQ_QUEUE:DEV.QUEUE.1}
+    backout-queue: ${APP_MQ_BACKOUT_QUEUE:DEV.QUEUE.BACKOUT}
+    backout-threshold: ${APP_MQ_BACKOUT_THRESHOLD:3}
+    concurrency: ${APP_MQ_CONCURRENCY:5-10}
+
 server:
   port: ${SERVER_PORT:8080}
 
@@ -10,3 +57,11 @@ management:
     web:
       exposure:
         include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    root: INFO
+    com.cacib.messaging: DEBUG
