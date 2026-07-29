@@ -5,6 +5,7 @@ Application de routage IBM MQ → PostgreSQL avec IHM de consultation.
 ## Stack
 
 - **Backend** : Java 21, Spring Boot 4.0.x, Spring Data JPA
+- **Frontend** : Angular 22, standalone components, signals, Angular Material 22
 - **Base de données** : PostgreSQL 16
 - **Broker** : IBM MQ 9.4 (image `icr.io/ibm-messaging/mq`, licence développeur)
 
@@ -13,6 +14,7 @@ Application de routage IBM MQ → PostgreSQL avec IHM de consultation.
 ```
 messaging-cacib/
 ├── backend/            projet Maven Spring Boot (architecture hexagonale)
+├── frontend/           application Angular 22 (liste/détail des messages)
 ├── docker-compose.yml  IBM MQ + PostgreSQL
 └── .env.example        modèle de configuration (copier en .env)
 ```
@@ -21,7 +23,8 @@ messaging-cacib/
 
 - Docker Desktop avec **≥ 4 Go RAM alloués** (l'image IBM MQ est lourde, ~2 Go,
   démarrage 30-60 s).
-- Pour développer : **Java 21+** et **Maven 3.9+**.
+- Pour développer : **Java 21+**, **Maven 3.9+**, **Node.js 20+** et
+  **Angular CLI 22**.
 
 ## Démarrage
 
@@ -120,8 +123,33 @@ Les erreurs (404, 400 de validation) suivent un format uniforme :
 
 Documentation interactive : Swagger UI sur http://localhost:8080/swagger-ui.html.
 
+## Frontend (Angular)
+
+```powershell
+cd frontend
+npm install
+npm start              # ng serve, http://localhost:4200
+```
+
+L'IHM appelle le backend sur `http://localhost:8080` (voir
+`src/environments/environment.ts`). Le backend doit tourner et autoriser
+l'origine `http://localhost:4200` en CORS — déjà configuré par défaut
+(`app.cors.allowed-origins` dans `application.yml`, surchargeable via
+`APP_CORS_ALLOWED_ORIGINS`).
+
+Vues :
+- `/messages` — liste paginée (offset) et filtrable (statut, file source,
+  intervalle de dates), indicateur de statut coloré
+- `/messages/:id` — détail complet (headers JMS, payload, dates)
+
+```powershell
+npm test                          # Vitest
+npm run build -- --configuration production
+```
+
 ## Feuille de route
 
 Phase 0 — Bootstrap ✅
 Phase 1 — Consommation MQ + persistance ✅
 Phase 2 — API REST ✅
+Phase 3 — IHM Angular ✅

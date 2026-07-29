@@ -1,0 +1,44 @@
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.error-banner {
+  color: #a31515;
+  background-color: #fbdfdf;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+.messages-table {
+  width: 100%;
+}
+
+.message-row {
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--mat-sys-surface-container-high);
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 24px;
+  color: var(--mat-sys-on-surface-variant);
+}

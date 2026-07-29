@@ -1,0 +1,66 @@
+<a routerLink="/messages" mat-button class="back-link">
+  <mat-icon>arrow_back</mat-icon>
+  Retour à la liste
+</a>
+
+@if (loading()) {
+  <div class="loading">
+    <mat-spinner diameter="32" />
+  </div>
+}
+
+@if (error()) {
+  <p class="error-banner">{{ error() }}</p>
+}
+
+@if (message(); as m) {
+  <mat-card class="detail-card">
+    <mat-card-header>
+      <mat-card-title>Message {{ m.id }}</mat-card-title>
+      <mat-card-subtitle>
+        <app-status-chip [status]="m.status" />
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <dl class="detail-grid">
+        <dt>MQ Message ID</dt>
+        <dd>{{ m.mqMessageId }}</dd>
+
+        <dt>Correlation ID</dt>
+        <dd>{{ m.correlationId ?? '—' }}</dd>
+
+        <dt>File source</dt>
+        <dd>{{ m.sourceQueue ?? '—' }}</dd>
+
+        <dt>Application source</dt>
+        <dd>{{ m.sourceApplication ?? '—' }}</dd>
+
+        <dt>Reçu le</dt>
+        <dd>{{ m.receivedAt | date: 'dd/MM/yyyy HH:mm:ss.SSS' }}</dd>
+
+        <dt>Traité le</dt>
+        <dd>{{ m.processedAt ? (m.processedAt | date: 'dd/MM/yyyy HH:mm:ss.SSS') : '—' }}</dd>
+      </dl>
+
+      <h3>Headers JMS</h3>
+      @if (headerEntries().length > 0) {
+        <table class="headers-table">
+          <tbody>
+            @for (entry of headerEntries(); track entry[0]) {
+              <tr>
+                <td class="header-key">{{ entry[0] }}</td>
+                <td>{{ entry[1] }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <p>Aucun header.</p>
+      }
+
+      <h3>Payload</h3>
+      <pre class="payload">{{ m.payload }}</pre>
+    </mat-card-content>
+  </mat-card>
+}

@@ -1,0 +1,18 @@
+.status-chip {
+  font-weight: 500;
+
+  &.status-received {
+    background-color: #e3e8ef;
+    color: #33415c;
+  }
+
+  &.status-processed {
+    background-color: #dcf5e3;
+    color: #1b7a3d;
+  }
+
+  &.status-error {
+    background-color: #fbdfdf;
+    color: #a31515;
+  }
+}
