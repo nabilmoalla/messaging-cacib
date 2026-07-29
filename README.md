@@ -91,7 +91,37 @@ Le message doit apparaître en base en quelques secondes :
 docker exec messaging-postgres psql -U messaging -d messaging -c "SELECT mq_message_id, source_queue, status, payload FROM message;"
 ```
 
+### API REST
+
+Toutes les routes sont sous `/api/v1/messages`. Filtres communs : `status`
+(`RECEIVED`/`PROCESSED`/`ERROR`), `sourceQueue`, `from`/`to` (ISO-8601).
+
+**Liste — pagination offset** :
+
+```powershell
+curl "http://localhost:8080/api/v1/messages?page=0&size=20"
+curl "http://localhost:8080/api/v1/messages?status=PROCESSED&sourceQueue=DEV.QUEUE.1"
+```
+
+**Détail d'un message** :
+
+```powershell
+curl "http://localhost:8080/api/v1/messages/<id>"
+```
+
+**Statistiques** (compteurs par statut / par file source) :
+
+```powershell
+curl "http://localhost:8080/api/v1/messages/stats"
+```
+
+Les erreurs (404, 400 de validation) suivent un format uniforme :
+`{ "timestamp", "status", "error", "message", "path" }`.
+
+Documentation interactive : Swagger UI sur http://localhost:8080/swagger-ui.html.
+
 ## Feuille de route
 
 Phase 0 — Bootstrap ✅
 Phase 1 — Consommation MQ + persistance ✅
+Phase 2 — API REST ✅
