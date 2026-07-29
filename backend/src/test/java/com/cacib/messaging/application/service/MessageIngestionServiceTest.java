@@ -5,6 +5,7 @@ import com.cacib.messaging.domain.model.MessageStatus;
 import com.cacib.messaging.domain.port.in.IngestMessageCommand;
 import com.cacib.messaging.domain.port.in.IngestionOutcome;
 import com.cacib.messaging.domain.port.out.MessageRepositoryPort;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -25,13 +26,15 @@ class MessageIngestionServiceTest {
     private static final Instant FIXED_NOW = Instant.parse("2026-07-27T10:00:00Z");
 
     private MessageRepositoryPort repositoryPort;
+    private SimpleMeterRegistry meterRegistry;
     private MessageIngestionService service;
 
     @BeforeEach
     void setUp() {
         repositoryPort = mock(MessageRepositoryPort.class);
+        meterRegistry = new SimpleMeterRegistry();
         Clock fixedClock = Clock.fixed(FIXED_NOW, ZoneOffset.UTC);
-        service = new MessageIngestionService(repositoryPort, fixedClock);
+        service = new MessageIngestionService(repositoryPort, fixedClock, meterRegistry);
     }
 
     @Test
@@ -60,6 +63,9 @@ class MessageIngestionServiceTest {
         assertThat(saved.receivedAt()).isEqualTo(receivedAt);
         assertThat(saved.processedAt()).isEqualTo(FIXED_NOW);
         assertThat(saved.id()).isNotNull();
+
+        assertThat(meterRegistry.counter("messages.ingested", "outcome", "persisted").count()).isEqualTo(1.0);
+        assertThat(meterRegistry.counter("messages.ingested", "outcome", "duplicate").count()).isEqualTo(0.0);
     }
 
     @Test
@@ -72,5 +78,7 @@ class MessageIngestionServiceTest {
         var outcome = service.ingest(command);
 
         assertThat(outcome).isEqualTo(IngestionOutcome.DUPLICATE);
+        assertThat(meterRegistry.counter("messages.ingested", "outcome", "duplicate").count()).isEqualTo(1.0);
+        assertThat(meterRegistry.counter("messages.ingested", "outcome", "persisted").count()).isEqualTo(0.0);
     }
 }

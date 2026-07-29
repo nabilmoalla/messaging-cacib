@@ -6,6 +6,8 @@ import com.cacib.messaging.domain.port.in.IngestMessageCommand;
 import com.cacib.messaging.domain.port.in.IngestMessageUseCase;
 import com.cacib.messaging.domain.port.in.IngestionOutcome;
 import com.cacib.messaging.domain.port.out.MessageRepositoryPort;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,10 +20,14 @@ public class MessageIngestionService implements IngestMessageUseCase {
 
     private final MessageRepositoryPort messageRepositoryPort;
     private final Clock clock;
+    private final Counter persistedCounter;
+    private final Counter duplicateCounter;
 
-    public MessageIngestionService(MessageRepositoryPort messageRepositoryPort, Clock clock) {
+    public MessageIngestionService(MessageRepositoryPort messageRepositoryPort, Clock clock, MeterRegistry meterRegistry) {
         this.messageRepositoryPort = messageRepositoryPort;
         this.clock = clock;
+        this.persistedCounter = meterRegistry.counter("messages.ingested", "outcome", "persisted");
+        this.duplicateCounter = meterRegistry.counter("messages.ingested", "outcome", "duplicate");
     }
 
     @Override
@@ -42,10 +48,12 @@ public class MessageIngestionService implements IngestMessageUseCase {
 
         boolean inserted = messageRepositoryPort.insertIfAbsent(message);
         if (!inserted) {
+            duplicateCounter.increment();
             log.info("Duplicate message received, mqMessageId={} already stored — skipping", command.mqMessageId());
             return IngestionOutcome.DUPLICATE;
         }
 
+        persistedCounter.increment();
         log.debug("Message persisted, mqMessageId={}, sourceQueue={}", command.mqMessageId(), command.sourceQueue());
         return IngestionOutcome.PERSISTED;
     }

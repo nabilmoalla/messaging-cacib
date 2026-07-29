@@ -8,8 +8,13 @@ spring:
     password: ${DB_PASSWORD:messaging}
     hikari:
       pool-name: messaging-hikari
+      # Sized against APP_MQ_CONCURRENCY (max 10 JMS listener threads, each holding one
+      # connection during its transactional insert): 20 leaves ~10 connections of headroom
+      # for concurrent REST reads during ingestion peaks.
       maximum-pool-size: ${DB_POOL_MAX:20}
       minimum-idle: ${DB_POOL_MIN:5}
+      connection-timeout: ${DB_POOL_CONNECTION_TIMEOUT_MS:10000}
+      leak-detection-threshold: ${DB_POOL_LEAK_DETECTION_MS:30000}
 
   jpa:
     hibernate:
@@ -58,10 +63,16 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
   endpoint:
     health:
-      show-details: when-authorized
+      # "when-authorized" would show nothing at all here: this exercise has no
+      # authentication (CLAUDE.md §1), so no caller is ever "authorized" and the DB/JMS
+      # component details would stay hidden forever. "always" is the pragmatic choice
+      # given that constraint — in a real deployment this would instead sit behind a
+      # separate internal management port (management.server.port), not "always" on
+      # the public one.
+      show-details: always
 
 springdoc:
   swagger-ui:
@@ -70,6 +81,8 @@ springdoc:
     path: /v3/api-docs
 
 logging:
+  pattern:
+    correlation: "[%X{correlationId:-}]"
   level:
     root: INFO
     com.cacib.messaging: DEBUG

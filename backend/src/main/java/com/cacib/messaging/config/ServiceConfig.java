@@ -5,6 +5,7 @@ import com.cacib.messaging.application.service.MessageQueryService;
 import com.cacib.messaging.domain.port.in.IngestMessageUseCase;
 import com.cacib.messaging.domain.port.in.QueryMessagesUseCase;
 import com.cacib.messaging.domain.port.out.MessageRepositoryPort;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -19,8 +20,9 @@ public class ServiceConfig {
     }
 
     @Bean
-    public IngestMessageUseCase ingestMessageUseCase(MessageRepositoryPort messageRepositoryPort, Clock clock) {
-        return new MessageIngestionService(messageRepositoryPort, clock);
+    public IngestMessageUseCase ingestMessageUseCase(MessageRepositoryPort messageRepositoryPort, Clock clock,
+                                                      MeterRegistry meterRegistry) {
+        return new MessageIngestionService(messageRepositoryPort, clock, meterRegistry);
     }
 
     @Bean
