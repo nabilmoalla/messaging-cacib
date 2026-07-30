@@ -81,4 +81,23 @@ class MessageIngestionServiceTest {
         assertThat(meterRegistry.counter("messages.ingested", "outcome", "duplicate").count()).isEqualTo(1.0);
         assertThat(meterRegistry.counter("messages.ingested", "outcome", "persisted").count()).isEqualTo(0.0);
     }
+
+    @Test
+    void blankPayloadIsPersistedAsError() {
+        var command = new IngestMessageCommand(
+                "mq-id-blank", "corr-1", "DEV.QUEUE.1", "BACKOFFICE",
+                Map.of(), "   ", Instant.parse("2026-07-27T09:59:00Z"));
+        when(repositoryPort.insertIfAbsent(any(Message.class))).thenReturn(true);
+
+        var outcome = service.ingest(command);
+
+        assertThat(outcome).isEqualTo(IngestionOutcome.INVALID);
+
+        ArgumentCaptor<Message> captor = ArgumentCaptor.forClass(Message.class);
+        verify(repositoryPort).insertIfAbsent(captor.capture());
+        assertThat(captor.getValue().status()).isEqualTo(MessageStatus.ERROR);
+
+        assertThat(meterRegistry.counter("messages.ingested", "outcome", "invalid").count()).isEqualTo(1.0);
+        assertThat(meterRegistry.counter("messages.ingested", "outcome", "persisted").count()).isEqualTo(0.0);
+    }
 }

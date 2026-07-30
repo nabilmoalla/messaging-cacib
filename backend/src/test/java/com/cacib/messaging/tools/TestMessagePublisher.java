@@ -72,7 +72,10 @@ public final class TestMessagePublisher {
     }
 
     private static String env(String name, String defaultValue) {
+        // Only null (unset) falls back to the default — an explicitly blank value (e.g.
+        // MQ_PAYLOAD="") is a deliberate test input (see MessageIngestionService's
+        // blank-payload handling) and must be honored, not silently replaced.
         String value = System.getenv(name);
-        return (value == null || value.isBlank()) ? defaultValue : value;
+        return value == null ? defaultValue : value;
     }
 }
