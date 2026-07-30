@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MessageList } from './message-list';
 import { MessageService } from '../../../core/services/message.service';
 import { MessagePageResponse, MessageResponse } from '../../../core/models/message.model';
@@ -50,7 +50,7 @@ describe('MessageList', () => {
 
   it('surfaces an error message when the request fails', () => {
     const messageService = {
-      listByOffset: () => ({ subscribe: (observer: any) => observer.error({ status: 500 }) }),
+      listByOffset: () => throwError(() => ({ status: 500 })),
       getStats: () => of({ byStatus: {}, bySourceQueue: {} }),
     } as unknown as MessageService;
 

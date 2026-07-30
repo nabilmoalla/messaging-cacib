@@ -1,7 +1,9 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { EMPTY, Subject, catchError, switchMap, tap } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -26,6 +28,20 @@ const DISPLAYED_COLUMNS = [
   'correlationId',
   'status',
 ];
+
+interface FilterFormState {
+  status: MessageStatus | null;
+  sourceQueue: string;
+  from: string;
+  to: string;
+}
+
+const EMPTY_FILTER_FORM_STATE: FilterFormState = {
+  status: null,
+  sourceQueue: '',
+  from: '',
+  to: '',
+};
 
 @Component({
   selector: 'app-message-list',
@@ -65,13 +81,58 @@ export class MessageList implements OnInit {
     return byStatus ? Object.values(byStatus).reduce((sum, count) => sum + count, 0) : 0;
   });
 
-  protected status: MessageStatus | null = null;
-  protected sourceQueue = '';
-  protected from = '';
-  protected to = '';
+  protected status = EMPTY_FILTER_FORM_STATE.status;
+  protected sourceQueue = EMPTY_FILTER_FORM_STATE.sourceQueue;
+  protected from = EMPTY_FILTER_FORM_STATE.from;
+  protected to = EMPTY_FILTER_FORM_STATE.to;
+
+  private readonly reload$ = new Subject<void>();
+  private readonly reloadStats$ = new Subject<void>();
+
+  constructor() {
+    // switchMap cancels the previous in-flight request whenever reload$ fires again, so rapid
+    // pagination/filter changes can never let a stale response overwrite a newer one.
+    this.reload$
+      .pipe(
+        tap(() => {
+          this.loading.set(true);
+          this.error.set(null);
+        }),
+        switchMap(() =>
+          this.messageService.listByOffset(this.currentFilter(), this.page(), this.pageSize()).pipe(
+            catchError(() => {
+              this.error.set('Impossible de charger les messages. Vérifiez que le backend est démarré.');
+              this.loading.set(false);
+              return EMPTY;
+            })
+          )
+        ),
+        takeUntilDestroyed()
+      )
+      .subscribe((result) => {
+        this.messages.set(result.content);
+        this.totalElements.set(result.totalElements);
+        this.loading.set(false);
+      });
+
+    this.reloadStats$
+      .pipe(
+        switchMap(() =>
+          this.messageService.getStats().pipe(
+            catchError(() => {
+              this.stats.set(null);
+              return EMPTY;
+            })
+          )
+        ),
+        takeUntilDestroyed()
+      )
+      .subscribe((result) => this.stats.set(result));
+  }
 
   ngOnInit(): void {
     this.load();
+    this.loadStats();
   }
 
   protected onPage(event: PageEvent): void {
@@ -86,10 +147,7 @@ export class MessageList implements OnInit {
   }
 
   protected resetFilters(): void {
-    this.status = null;
-    this.sourceQueue = '';
-    this.from = '';
-    this.to = '';
+    Object.assign(this, EMPTY_FILTER_FORM_STATE);
     this.page.set(0);
     this.load();
   }
@@ -99,30 +157,11 @@ export class MessageList implements OnInit {
   }
 
   private load(): void {
-    this.loading.set(true);
-    this.error.set(null);
-
-    const filter = this.currentFilter();
-    this.messageService.listByOffset(filter, this.page(), this.pageSize()).subscribe({
-      next: (result) => {
-        this.messages.set(result.content);
-        this.totalElements.set(result.totalElements);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Impossible de charger les messages. Vérifiez que le backend est démarré.');
-        this.loading.set(false);
-      },
-    });
-
-    this.loadStats();
+    this.reload$.next();
   }
 
   private loadStats(): void {
-    this.messageService.getStats().subscribe({
-      next: (result) => this.stats.set(result),
-      error: () => this.stats.set(null),
-    });
+    this.reloadStats$.next();
   }
 
   private currentFilter(): MessageFilter {
