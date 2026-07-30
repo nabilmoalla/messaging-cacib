@@ -53,8 +53,11 @@ ibm:
 app:
   mq:
     queue: ${APP_MQ_QUEUE:DEV.QUEUE.1}
-    backout-queue: ${APP_MQ_BACKOUT_QUEUE:DEV.QUEUE.BACKOUT}
-    backout-threshold: ${APP_MQ_BACKOUT_THRESHOLD:3}
+    # The backout queue name and BOTHRESH are NOT read from here: they're an IBM MQ queue
+    # manager policy, provisioned at image build time in mq-config/20-configure-queues.mqsc.
+    # There is no live config path from a Spring property to that baked-in mqsc script, so
+    # this section intentionally has no backout-* keys — see the README's "Backout queue"
+    # section to change the policy.
     concurrency: ${APP_MQ_CONCURRENCY:5-10}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:4200}
