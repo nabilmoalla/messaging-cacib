@@ -5,7 +5,9 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/messaging}
     username: ${DB_USERNAME:messaging}
-    password: ${DB_PASSWORD:messaging}
+    # No fallback default: a real secret must never live in application.yml (CLAUDE.md §4).
+    # Missing DB_PASSWORD fails fast at startup instead of silently using a known credential.
+    password: ${DB_PASSWORD}
     hikari:
       pool-name: messaging-hikari
       # Sized against APP_MQ_CONCURRENCY (max 10 JMS listener threads, each holding one
@@ -40,7 +42,8 @@ ibm:
     channel: ${MQ_CHANNEL:DEV.APP.SVRCONN}
     queue-manager: ${MQ_QMGR_NAME:QM1}
     user: ${MQ_APP_USER:app}
-    password: ${MQ_APP_PASSWORD:passw0rd}
+    # No fallback default, same reasoning as spring.datasource.password above.
+    password: ${MQ_APP_PASSWORD}
     userAuthenticationMQCSP: true
     pool:
       enabled: true

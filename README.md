@@ -98,8 +98,17 @@ docker compose ps      # vérifier que ibmmq et postgres sont "healthy"
 
 ### 2. Compiler et lancer le backend
 
+`application.yml` n'a **aucune valeur par défaut pour les mots de passe** (DB
+et MQ) : les mettre en dur, même comme fallback, serait un secret committé
+dans le code (voir CLAUDE.md §4). En dehors de Docker Compose (qui les
+injecte déjà), il faut donc les charger depuis `.env` dans l'environnement
+avant de lancer Maven :
+
 ```powershell
 cd backend
+Get-Content ..\.env | Where-Object { $_ -match '^\s*(DB_PASSWORD|MQ_APP_PASSWORD)=(.*)$' } | ForEach-Object {
+  Set-Item "Env:$($matches[1])" $matches[2]
+}
 mvn spring-boot:run
 ```
 
