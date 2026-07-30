@@ -39,4 +39,3 @@ mqjms.log.*.lck
 
 # ---- AI tooling (not committed) ----
 .claude/
-CLAUDE.md
