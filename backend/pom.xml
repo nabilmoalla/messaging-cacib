@@ -143,6 +143,13 @@
                     <excludedGroups>slow</excludedGroups>
                 </configuration>
             </plugin>
+            <plugin>
+                <!-- Not bound to any lifecycle phase: only used to run TestMessagePublisher
+                     manually via `mvn exec:java`, see README "Tester manuellement l'ingestion". -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.1</version>
+            </plugin>
         </plugins>
     </build>
 

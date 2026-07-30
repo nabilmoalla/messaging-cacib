@@ -174,16 +174,30 @@ cd backend
 mvn spring-boot:run
 ```
 
-Dans un autre terminal, déposer un message avec l'utilitaire d'exemple IBM MQ :
+Dans un autre terminal, déposer un message avec le producteur de test du projet
+(`backend/src/test/java/com/cacib/messaging/tools/TestMessagePublisher.java`) :
 
 ```powershell
-echo '<payment><amount>100</amount></payment>' | docker exec -i messaging-ibmmq /opt/mqm/samp/bin/amqsput DEV.QUEUE.1 QM1
+cd backend
+mvn -q compile test-compile exec:java `
+  "-Dexec.mainClass=com.cacib.messaging.tools.TestMessagePublisher" `
+  "-Dexec.classpathScope=test"
 ```
+
+> ⚠️ Ne pas utiliser l'utilitaire d'exemple IBM MQ `amqsput` pour ce test : il
+> effectue un dépôt MQI natif sans aucun en-tête JMS, donc `JMSCorrelationID` et
+> la propriété `sourceApplication` restent absents — `correlation_id` et
+> `source_application` seraient alors NULL en base. `TestMessagePublisher` publie
+> via JMS (comme le fait `MessageMqListenerIT` contre un vrai conteneur IBM MQ) et
+> positionne les deux, avec les mêmes variables d'environnement `MQ_*` /
+> `APP_MQ_QUEUE` que `application.yml` (mêmes valeurs par défaut, donc utilisable
+> tel quel contre la stack docker-compose). Personnalisables via
+> `MQ_PAYLOAD`, `MQ_SOURCE_APPLICATION`, `MQ_CORRELATION_ID`.
 
 Le message doit apparaître en base en quelques secondes :
 
 ```powershell
-docker exec messaging-postgres psql -U messaging -d messaging -c "SELECT mq_message_id, source_queue, status, payload FROM message;"
+docker exec messaging-postgres psql -U messaging -d messaging -c "SELECT mq_message_id, correlation_id, source_queue, source_application, status, payload FROM message;"
 ```
 
 ### API REST
