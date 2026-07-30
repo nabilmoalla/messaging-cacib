@@ -1,5 +1,6 @@
 package com.cacib.messaging.infrastructure.persistence;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -28,8 +29,12 @@ public interface MessageJpaRepository extends JpaRepository<MessageEntity, UUID>
     @Query("SELECT m.status AS status, COUNT(m) AS messageCount FROM MessageEntity m GROUP BY m.status")
     List<StatusCount> countGroupedByStatus();
 
-    @Query("SELECT m.sourceQueue AS sourceQueue, COUNT(m) AS messageCount FROM MessageEntity m GROUP BY m.sourceQueue")
-    List<SourceQueueCount> countGroupedBySourceQueue();
+    // source_queue is free-text with uncontrolled cardinality (new Back Office producers,
+    // environment-specific names...), so this is capped to the top N by volume via the
+    // Pageable rather than returning every distinct value ever seen.
+    @Query("SELECT m.sourceQueue AS sourceQueue, COUNT(m) AS messageCount FROM MessageEntity m "
+            + "GROUP BY m.sourceQueue ORDER BY COUNT(m) DESC")
+    List<SourceQueueCount> countGroupedBySourceQueue(Pageable pageable);
 
     @Modifying
     @Query(value = """

@@ -25,6 +25,7 @@ public class MessageRepositoryAdapter implements MessageRepositoryPort {
 
     private static final String UNKNOWN_SOURCE_QUEUE = "UNKNOWN";
     private static final Sort DEFAULT_ORDER = Sort.by(Sort.Order.asc("receivedAt"), Sort.Order.asc("id"));
+    private static final int MAX_SOURCE_QUEUES_IN_STATS = 50;
 
     private final MessageJpaRepository jpaRepository;
     private final ObjectMapper objectMapper;
@@ -76,7 +77,8 @@ public class MessageRepositoryAdapter implements MessageRepositoryPort {
                         row -> MessageStatus.valueOf(row.getStatus().name()),
                         MessageJpaRepository.StatusCount::getMessageCount));
 
-        Map<String, Long> bySourceQueue = jpaRepository.countGroupedBySourceQueue().stream()
+        Map<String, Long> bySourceQueue = jpaRepository
+                .countGroupedBySourceQueue(PageRequest.of(0, MAX_SOURCE_QUEUES_IN_STATS)).stream()
                 .collect(Collectors.toMap(
                         row -> row.getSourceQueue() == null ? UNKNOWN_SOURCE_QUEUE : row.getSourceQueue(),
                         MessageJpaRepository.SourceQueueCount::getMessageCount,
